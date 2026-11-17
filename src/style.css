@@ -261,7 +261,7 @@ p {
   border-top: 1px solid #ece9f2;
   display: flex;
   justify-content: space-around;
-  padding: 10px 20px calc(12px + env(safe-area-inset-bottom));
+  padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
   z-index: 5;
 }
 .tabs button {
@@ -271,31 +271,56 @@ p {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   font-size: 11px;
-  font-weight: 700;
-  width: 90px;
+  font-weight: 600;
+  flex: 1;
+  max-width: 80px;
   color: #6d6979;
+  cursor: pointer;
+  padding: 4px 0;
+  outline: none;
+  box-shadow: none;
+  text-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
 }
-.tabs button > span {
-  font-size: 26px;
-  line-height: 32px;
-  width: 58px;
-  border-radius: 20px;
+.tabs button:focus,
+.tabs button:active {
+  outline: none;
+  box-shadow: none;
+}
+.tabs button .tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.tabs button svg {
+  display: block;
 }
 .tabs button[aria-current] {
   color: #d81e63;
 }
+.tabs button[aria-current] .tab-icon,
 .tabs button[aria-current] > span {
-  background: #ffe4ef;
+  background: transparent;
+  box-shadow: none;
 }
 .tabs b {
   position: absolute;
-  top: 0;
-  right: 9px;
+  top: 2px;
+  right: calc(50% - 18px);
   background: #ff3d81;
   border-radius: 10px;
   padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
   color: #15121d;
 }
 .empty {
@@ -610,9 +635,6 @@ p {
   font-size: 12px;
   margin-top: 25px;
 }
-.tabs button {
-  width: 75px;
-}
 button:disabled {
   cursor: not-allowed;
 }
@@ -693,8 +715,10 @@ html[data-theme="dark"] .tabs button {
 html[data-theme="dark"] .tabs button[aria-current] {
   color: #ff89b2;
 }
+html[data-theme="dark"] .tabs button[aria-current] .tab-icon,
 html[data-theme="dark"] .tabs button[aria-current] > span {
-  background: #4c2a40;
+  background: transparent;
+  box-shadow: none;
 }
 html[data-theme="dark"] .error {
   background: #522437;
@@ -974,12 +998,6 @@ html[data-theme="dark"] .error {
 .tabs {
   padding-left: 8px;
   padding-right: 8px;
-}
-.tabs button {
-  width: 65px;
-}
-.tabs button > span {
-  width: 48px;
 }
 html[data-theme="dark"] .unsent-action,
 html[data-theme="dark"] .letter-dialog,

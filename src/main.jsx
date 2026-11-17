@@ -4,6 +4,100 @@ import "./style.css";
 import { api } from "./api.js";
 import { Suggestions, ProfileEditor, LocationPermission } from "./features.jsx";
 import { Unsent, SayHi, Conversation, Encounters } from "./connections.jsx";
+
+function TabIcon({ name, active }) {
+  if (name === "Home") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={active ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z" />
+      </svg>
+    );
+  }
+  if (name === "Discover") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={active ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
+      </svg>
+    );
+  }
+  if (name === "Matches") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={active ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    );
+  }
+  if (name === "Encounter") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+        <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2" />
+      </svg>
+    );
+  }
+  if (name === "Profile") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={active ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 function App() {
   const [letterProfile, setLetterProfile] = useState(null);
   const [conversation, setConversation] = useState(null);
@@ -331,13 +425,7 @@ function App() {
         </section>
       )}
       <nav className="tabs" aria-label="Main navigation">
-        {[
-          ["Home", "⌂"],
-          ["Discover", "✦"],
-          ["Matches", "♡"],
-          ["Encounter", "⌘"],
-          ["Profile", "☺"],
-        ].map(([t, i]) => (
+        {["Home", "Discover", "Matches", "Encounter", "Profile"].map((t) => (
           <button
             key={t}
             aria-current={tab === t ? "page" : undefined}
@@ -347,8 +435,10 @@ function App() {
               if (t === "Matches" || t === "Discover") load();
             }}
           >
-            <span>{i}</span>
-            {t}
+            <span className="tab-icon">
+              <TabIcon name={t} active={tab === t} />
+            </span>
+            <span>{t}</span>
             {t === "Matches" && matches.length > 0 && <b>{matches.length}</b>}
           </button>
         ))}
