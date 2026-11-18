@@ -1,5 +1,7 @@
 # Coy — Discover
 
+**Live app:** https://coy-assignment-task.vercel.app
+
 A mobile-first React app with an Express API and SQLite persistence, built for the Coy SDE Intern Assignment. Discover shows one profile at a time; likes stay private until they are mutual. Home contains an optional suggestions note requested during development; dismissing it leaves the placeholder blank.
 
 ## Screenshots and features
@@ -122,4 +124,4 @@ The `coy-assignment-task` Vercel project uses the Express API at `api/index.js` 
 
 The PostgreSQL domain modules are generated from the SQLite domain implementation with `npm run generate:postgres`; validation and privacy rules have a shared source. Local tests still support SQLite. Set `PG_TEST_URL` to an isolated PostgreSQL database to run the additional integration test for concurrent requests, multiple backend instances, private letters and image persistence. Do not point tests at a production database. The local server uses PostgreSQL if `DATABASE_URL` is set, otherwise SQLite.
 
-Deployment is pending Neon integration terms acceptance in the Vercel account. No live URL or completed deployment is claimed until persistent storage has been connected and the CLI reports a successful deployment.
+Deployed to Vercel as `coy-assignment-task`, with a connected Neon PostgreSQL database. Vercel reports production deployment READY. Production database connectivity and schema initialization were verified separately. The local browser suite also passed against PostgreSQL.
