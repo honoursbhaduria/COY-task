@@ -2,8 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 import { api } from "./api.js";
-import { Suggestions, ProfileEditor, LocationPermission } from "./features.jsx";
-import { Unsent, SayHi, Conversation, Encounters } from "./connections.jsx";
+import { ProfileEditor, LocationPermission } from "./features.jsx";
+import {
+  Unsent,
+  Encounters,
+  MatchContact,
+  MatchedLetter,
+} from "./connections.jsx";
 
 function TabIcon({ name, active }) {
   if (name === "Home") {
@@ -100,14 +105,9 @@ function TabIcon({ name, active }) {
 
 function App() {
   const [letterProfile, setLetterProfile] = useState(null);
-  const [conversation, setConversation] = useState(null);
   const [encounterToken] = useState(() =>
     new URLSearchParams(location.search).get("encounter"),
   );
-  function openConversation(id) {
-    setConversation(id);
-    setTab("Matches");
-  }
   function encounterResult(result) {
     if (result.matched) setMatch(result.match);
     load();
@@ -150,6 +150,7 @@ function App() {
       setFeed(f.profiles);
       setMatches(m.matches);
     } catch (e) {
+      setFeed([]);
       setError(e.message);
     } finally {
       setLoading(false);
@@ -218,7 +219,6 @@ function App() {
           {theme === "dark" ? "☀" : "☾"}
         </button>
       </header>
-      {tab === "Home" && <Suggestions />}
       {tab === "Encounter" && (
         <Encounters
           user={user}
@@ -248,7 +248,6 @@ function App() {
             </p>
             <span className="spark">✧</span>
           </div>
-          <SayHi matches={matches} onOpen={openConversation} />
           <LocationPermission user={user} onSaved={saved} />
           {error && (
             <div role="alert" className="error">
@@ -373,18 +372,7 @@ function App() {
           )}
         </>
       )}
-      {tab === "Matches" && conversation && (
-        <Conversation
-          key={conversation}
-          target={conversation}
-          onBack={() => {
-            setConversation(null);
-            load();
-          }}
-          onLetter={setLetterProfile}
-        />
-      )}
-      {tab === "Matches" && !conversation && (
+      {tab === "Matches" && (
         <section>
           <span className="sticker">♡ The feeling is mutual</span>
           <h1>Your matches.</h1>
@@ -392,11 +380,7 @@ function App() {
           {matches.length ? (
             <div className="match-list">
               {matches.map((m) => (
-                <button
-                  className="match-row"
-                  key={m.id}
-                  onClick={() => openConversation(m.id)}
-                >
+                <div className="match-row" key={m.id}>
                   <img src={m.photo} alt="" />
                   <span>
                     <strong>
@@ -404,8 +388,9 @@ function App() {
                     </strong>
                     <small>{m.city}</small>
                   </span>
-                  <span className="mutual">Say hi →</span>
-                </button>
+                  <MatchContact profile={m} />
+                  <MatchedLetter profile={m} />
+                </div>
               ))}
             </div>
           ) : (
@@ -431,7 +416,6 @@ function App() {
             aria-current={tab === t ? "page" : undefined}
             onClick={() => {
               setTab(t);
-              setConversation(null);
               if (t === "Matches" || t === "Discover") load();
             }}
           >
@@ -476,16 +460,6 @@ function App() {
             }}
           >
             See matches
-          </button>
-          <button
-            className="btn wide"
-            onClick={() => {
-              const id = match.id;
-              setMatch(null);
-              openConversation(id);
-            }}
-          >
-            Say hi
           </button>
           <button className="quiet" onClick={() => setMatch(null)}>
             Keep discovering

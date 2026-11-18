@@ -18,7 +18,8 @@ export function createConnections({
     encounterMinutes > 1440
   )
     throw Error("ENCOUNTER_MINUTES must be between 1 and 1440.");
-  db.exec(`
+  db.exec(`CREATE TABLE IF NOT EXISTS saved_encounters_v1(viewer TEXT NOT NULL REFERENCES people_v2(id), target TEXT NOT NULL REFERENCES people_v2(id), created_at INTEGER NOT NULL, PRIMARY KEY(viewer,target), CHECK(viewer!=target));
+
     CREATE TABLE IF NOT EXISTS letters_v1(sender TEXT NOT NULL REFERENCES people_v2(id), recipient TEXT NOT NULL REFERENCES people_v2(id), body TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY(sender,recipient), CHECK(sender!=recipient));
     CREATE TABLE IF NOT EXISTS encounters_v1(token_hash TEXT PRIMARY KEY, owner TEXT NOT NULL UNIQUE REFERENCES people_v2(id), expires INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS messages_v1(id TEXT PRIMARY KEY, sender TEXT NOT NULL REFERENCES people_v2(id), recipient TEXT NOT NULL REFERENCES people_v2(id), body TEXT NOT NULL, created_at INTEGER NOT NULL, request_id TEXT NOT NULL, UNIQUE(sender,recipient,request_id), CHECK(sender!=recipient));
@@ -159,6 +160,52 @@ export function createConnections({
           "INSERT INTO shared_contacts_v1 VALUES(?,?,?) ON CONFLICT(owner,recipient) DO UPDATE SET phone=excluded.phone",
         ).run(owner, target, normalized);
       return { shared: !!normalized };
+    },
+    saveProfileEncounter(viewer, target) {
+      if (typeof target !== "string" || !/^[a-f0-9-]{36}$/.test(target))
+        fail("Invalid profile QR.");
+      const p = person(target);
+      if (!p || p.mock || !p.published)
+        fail("This profile is unavailable.", 404);
+      if (target === viewer) fail("This is your own QR.");
+      db.prepare("INSERT OR IGNORE INTO saved_encounters_v1 VALUES(?,?,?)").run(
+        viewer,
+        target,
+        now(),
+      );
+      return { saved: true, encounters: this.savedEncounters(viewer) };
+    },
+    savedEncounters(viewer) {
+      return db
+        .prepare(
+          "SELECT p.* FROM saved_encounters_v1 e JOIN people_v2 p ON p.id=e.target WHERE e.viewer=? AND p.published=1 ORDER BY e.created_at DESC",
+        )
+        .all(viewer)
+        .map(publicProfile);
+    },
+    saveEncounter(viewer, token) {
+      const card = encounter(token);
+      if (card.owner === viewer) fail("This is your own card.");
+      if (!person(viewer).published)
+        fail("Publish your profile before saving encounters.", 409);
+      db.prepare("INSERT OR IGNORE INTO saved_encounters_v1 VALUES(?,?,?)").run(
+        viewer,
+        card.owner,
+        now(),
+      );
+      return { saved: true, encounters: this.savedEncounters(viewer) };
+    },
+    crushEncounter(viewer, target) {
+      if (
+        typeof target !== "string" ||
+        !db
+          .prepare(
+            "SELECT 1 FROM saved_encounters_v1 WHERE viewer=? AND target=?",
+          )
+          .get(viewer, target)
+      )
+        fail("Encounter unavailable.", 404);
+      return swipe(viewer, target, "like", true);
     },
     createEncounter(owner) {
       if (!person(owner).published)

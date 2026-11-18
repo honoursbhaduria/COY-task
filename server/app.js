@@ -188,6 +188,18 @@ export function createApp(
   app.post("/encounters/revoke", (req, res) =>
     res.json(store.revokeEncounter(req.userId)),
   );
+  app.post("/encounters/profile", (req, res) =>
+    res.json(store.saveProfileEncounter(req.userId, req.body?.profileId)),
+  );
+  app.get("/encounters/saved", (req, res) =>
+    res.json({ encounters: store.savedEncounters(req.userId) }),
+  );
+  app.post("/encounters/:token/save", (req, res) =>
+    res.json(store.saveEncounter(req.userId, req.params.token)),
+  );
+  app.post("/encounters/saved/:target/like", (req, res) =>
+    res.json(store.crushEncounter(req.userId, req.params.target)),
+  );
   app.get("/encounters/:token", (req, res) =>
     res.json(store.previewEncounter(req.userId, req.params.token)),
   );

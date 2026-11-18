@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ProfileQr } from "./profile-qr.jsx";
 import { api } from "./api.js";
 
 export function Suggestions() {
@@ -123,6 +124,7 @@ export function ProfileEditor({ user, onSaved }) {
         <div>
           <h2>Your photo. Your choice.</h2>
           <p>Pick an avatar or upload a photo.</p>
+          <ProfileQr user={user} />
         </div>
       </div>
       <div

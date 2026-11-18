@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { QrScanner, readQrImage } from "./qr-scanner.jsx";
+import { QrScanner } from "./qr-scanner.jsx";
 import { api } from "./api.js";
 
 export function Unsent({ profile, onClose }) {
@@ -144,337 +144,45 @@ export function Unsent({ profile, onClose }) {
   );
 }
 
-export function SayHi({ matches, onOpen }) {
-  if (!matches.length) return null;
-  return (
-    <section className="say-hi">
-      <div className="section-head">
-        <h2>Say hi ♡</h2>
-        <span>It’s mutual.</span>
-      </div>
-      <div className="hi-list">
-        {matches.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => onOpen(p.id)}
-            aria-label={`Say hi to ${p.name}`}
-          >
-            <img src={p.photo} alt="" />
-            <strong>{p.name}</strong>
-            <small>Say hi →</small>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function Conversation({ target, onBack, onLetter }) {
-  const [data, setData] = useState(null),
-    [body, setBody] = useState(""),
-    [phone, setPhone] = useState(""),
+export function Encounters({ user, onMatch, onProfile }) {
+  const [encounters, setEncounters] = useState([]),
+    [scanning, setScanning] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
-  const pending = useRef(null);
-  useEffect(() => {
-    let active = true;
-    async function refresh() {
-      try {
-        const d = await api(`/connections/${target}`);
-        if (active) {
-          setData(d);
-          setError("");
-        }
-      } catch (e) {
-        if (active) {
-          setError(e.message);
-          setData(null);
-        }
-      }
-    }
-    refresh();
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") refresh();
-    }, 8000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [target]);
-  async function send(e) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    if (!pending.current || pending.current.body !== body)
-      pending.current = { body, requestId: crypto.randomUUID() };
-    try {
-      await api(`/connections/${target}/messages`, pending.current);
-      setBody("");
-      pending.current = null;
-      setData(await api(`/connections/${target}`));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function share(value) {
-    setBusy(true);
-    setError("");
-    try {
-      await api(`/connections/${target}/contact`, { phone: value });
-      setData(await api(`/connections/${target}`));
-      setPhone("");
-      setNotice(
-        value
-          ? "Your number is shared with this match only."
-          : "Your number is no longer shown.",
-      );
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <section className="conversation">
-      <button className="quiet back" onClick={onBack}>
-        ← All matches
-      </button>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {data ? (
-        <>
-          <div className="conversation-head">
-            <img src={data.profile.photo} alt="" />
-            <div>
-              <h1>{data.profile.name}</h1>
-              <p>♡ You both said yes.</p>
-            </div>
-          </div>
-          {data.profile.isMock && (
-            <p className="notice">
-              This is a mock profile. Messages are saved for the demo; no real
-              person will reply.
-            </p>
-          )}
-          {data.receivedLetter ? (
-            <article className="opened-letter">
-              <span>Unsent, now open.</span>
-              <h2>A letter from {data.profile.name}</h2>
-              <p>{data.receivedLetter}</p>
-            </article>
-          ) : (
-            <p className="hint left">
-              Any letter they wrote to you opens here after you match.
-            </p>
-          )}
-          <button className="quiet" onClick={() => onLetter(data.profile)}>
-            Write or edit your letter
-          </button>
-          <h2 className="chat-title">Say hi</h2>
-          <div className="messages" role="log" aria-label="Conversation">
-            {data.messages.length ? (
-              data.messages.map((m) => (
-                <div key={m.id} className={`message ${m.mine ? "mine" : ""}`}>
-                  <span>{m.mine ? "You" : data.profile.name}</span>
-                  <p>{m.body}</p>
-                  <time dateTime={m.sentAt}>
-                    {new Date(m.sentAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </div>
-              ))
-            ) : (
-              <p className="hint">A simple hello is a good place to start.</p>
-            )}
-          </div>
-          <p className="hint left">
-            Latest 100 messages · updates every few seconds.
-          </p>
-          <form className="message-form" onSubmit={send}>
-            <label>
-              Message
-              <textarea
-                rows="2"
-                maxLength={1000}
-                required
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder={`Say hi to ${data.profile.name}…`}
-              />
-            </label>
-            <button className="btn" disabled={busy || !body.trim()}>
-              Send message
-            </button>
-          </form>
-          {!data.profile.isMock && (
-            <details className="contact-sharing">
-              <summary>Ready to exchange numbers?</summary>
-              <p>
-                Sharing is optional, and only this match can see your number.
-              </p>
-              {data.sharedPhone ? (
-                <p>
-                  <strong>Their shared number:</strong>{" "}
-                  <a href={`tel:${data.sharedPhone}`}>{data.sharedPhone}</a>
-                </p>
-              ) : (
-                <p>They haven’t shared a number yet.</p>
-              )}
-              {data.ownPhone ? (
-                <>
-                  <p>
-                    <strong>You’re sharing:</strong> {data.ownPhone}
-                  </p>
-                  <button
-                    className="quiet"
-                    disabled={busy}
-                    onClick={() => share("")}
-                  >
-                    Stop sharing my number
-                  </button>
-                </>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    share(phone);
-                  }}
-                >
-                  <label>
-                    Your phone number
-                    <input
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+91 98765 43210"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </label>
-                  <button className="btn" disabled={busy}>
-                    Share with this match
-                  </button>
-                </form>
-              )}
-              <p className="hint left">
-                Only share a number you own. Removing it cannot undo someone
-                saving it.
-              </p>
-              {notice && <p role="status">{notice}</p>}
-            </details>
-          )}
-        </>
-      ) : (
-        !error && <p role="status">Opening your conversation…</p>
-      )}
-    </section>
-  );
-}
-
-export function Encounters({ user, onMatch, onProfile, initialToken }) {
-  const [card, setCard] = useState(null),
-    [scanning, setScanning] = useState(false),
-    [preview, setPreview] = useState(null),
-    [error, setError] = useState(""),
-    [notice, setNotice] = useState(""),
-    [busy, setBusy] = useState(false),
-    [clock, setClock] = useState(Date.now());
   const stopScanning = useCallback(() => setScanning(false), []);
-  const canvas = useRef(null);
-  const url = card ? `${location.origin}/?encounter=${card.token}` : "";
   useEffect(() => {
-    const t = setInterval(() => setClock(Date.now()), 1000);
-    return () => clearInterval(t);
+    api("/encounters/saved")
+      .then((d) => setEncounters(d.encounters))
+      .catch((e) => setError(e.message));
   }, []);
-  useEffect(() => {
-    if (!url) return;
-    let active = true;
-    import("qrcode")
-      .then((module) => {
-        if (active && canvas.current)
-          return module.default.toCanvas(canvas.current, url, {
-            width: 240,
-            margin: 3,
-            errorCorrectionLevel: "M",
-          });
-      })
-      .catch(() =>
-        setError("Could not draw the QR code. Please create a new card."),
-      );
-    return () => {
-      active = false;
-    };
-  }, [url]);
-  useEffect(() => {
-    if (initialToken) inspect(initialToken);
-  }, [initialToken]);
-  function tokenOf(value) {
-    const trimmed = value.trim();
-    if (/^[a-f0-9]{48}$/.test(trimmed)) return trimmed;
-    const parsed = new URL(trimmed);
-    if (parsed.origin !== location.origin)
-      throw Error("Scan an Encounter QR code from this app.");
-    const token = parsed.searchParams.get("encounter");
-    if (!token || !/^[a-f0-9]{48}$/.test(token))
-      throw Error("That QR code is not an Encounter card.");
-    return token;
-  }
   async function inspect(value) {
     setScanning(false);
     setBusy(true);
     setError("");
-    setNotice("");
-    setPreview(null);
     try {
-      const token = tokenOf(value);
-      setPreview({ ...(await api(`/encounters/${token}`)), token });
-    } catch (e) {
-      setError(
-        e.message === "Invalid URL"
-          ? "That QR code is not a valid Encounter card."
-          : e.message,
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function create() {
-    setBusy(true);
-    setError("");
-    setNotice("");
-    try {
-      setCard(await api("/encounters", {}));
+      let data;
+      try {
+        data = JSON.parse(value);
+      } catch {
+        throw Error("Scan a profile QR generated by Coy.");
+      }
+      if (!data || typeof data.id !== "string" || typeof data.name !== "string")
+        throw Error("Invalid profile QR.");
+      const result = await api("/encounters/profile", { profileId: data.id });
+      setEncounters(result.encounters);
+      setNotice("Added to your encounters. Decide later if you feel a spark.");
     } catch (e) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
   }
-  async function revoke() {
-    setBusy(true);
-    try {
-      await api("/encounters/revoke", {});
-      setCard(null);
-      setNotice("Your previous card is no longer valid.");
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function like() {
+  async function like(id) {
     setBusy(true);
     setError("");
     try {
-      const result = await api(`/encounters/${preview.token}/like`, {});
+      const result = await api(`/encounters/saved/${id}/like`, {});
       onMatch(result);
       setNotice(
         result.matched
@@ -487,7 +195,6 @@ export function Encounters({ user, onMatch, onProfile, initialToken }) {
       setBusy(false);
     }
   }
-  const expired = card && Date.parse(card.expiresAt) <= clock;
   return (
     <section className="encounters">
       <span className="sticker">Encounter</span>
@@ -495,65 +202,17 @@ export function Encounters({ user, onMatch, onProfile, initialToken }) {
         A hello.
         <br />A second chance.
       </h1>
-      <p className="lede">For the person you met but never got their number.</p>
+      <p className="lede">Scan their profile QR. Remember the moment.</p>
       <p className="encounter-intro">
-        Exchange temporary QR cards in person. If you both feel a spark later,
-        add each other as a crush. Numbers stay private until you match and
-        choose to share.
+        Your personal QR is in Profile. Show it to someone you meet, or scan
+        theirs to save them here. Scanning never sends a like or shares a phone
+        number.
       </p>
-      {!user.published ? (
-        <div className="notice">
-          Publish your profile to exchange cards.
-          <button className="quiet" onClick={onProfile}>
-            Edit my profile →
-          </button>
-        </div>
-      ) : (
-        <>
-          <button className="btn wide" disabled={busy} onClick={create}>
-            {card ? "Create a new card" : "Create my encounter card"}
-          </button>
-          {card && (
-            <div className="encounter-card">
-              <h2>{user.name}’s encounter card</h2>
-              {!expired ? (
-                <>
-                  <canvas ref={canvas} aria-label="My Encounter QR code" />
-                  <p>
-                    Expires{" "}
-                    {new Date(card.expiresAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </>
-              ) : (
-                <p>This card has expired. Create a new one to reconnect.</p>
-              )}
-              <button className="quiet" disabled={busy} onClick={revoke}>
-                Revoke card
-              </button>
-            </div>
-          )}
-          <p className="hint left">
-            A new card replaces your previous one. Anyone who scans your QR can
-            view your published profile until it expires. Share it only with
-            someone you want to meet again.
-          </p>
-          {["localhost", "127.0.0.1"].includes(location.hostname) && (
-            <p className="hint left">
-              For another phone to scan this, open the app at a shared HTTPS
-              address. A local-only app cannot connect two phones.
-            </p>
-          )}
-        </>
-      )}
+      <button className="quiet" onClick={onProfile}>
+        Show my profile QR →
+      </button>
       <div className="encounter-form">
-        <h2>Scan their card</h2>
-        <p>
-          Point your camera at their Encounter QR. Their profile opens here—no
-          typing needed.
-        </p>
+        <h2>Scan their QR</h2>
         {scanning ? (
           <QrScanner onClose={stopScanning} onRead={inspect} />
         ) : (
@@ -562,69 +221,114 @@ export function Encounters({ user, onMatch, onProfile, initialToken }) {
             disabled={busy}
             onClick={() => {
               setError("");
-              setPreview(null);
               setScanning(true);
             }}
           >
             Scan QR code
           </button>
         )}
-        <label className="qr-upload">
-          Or scan a QR image
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            disabled={busy || scanning}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setBusy(true);
-              setError("");
-              setPreview(null);
-              try {
-                await inspect(await readQrImage(file));
-              } catch (err) {
-                setError(err.message || "Could not read that image.");
-              } finally {
-                setBusy(false);
-                e.target.value = "";
-              }
-            }}
-          />
-        </label>
         <p className="hint left">
-          Camera frames and QR images are read on your device, never uploaded.
+          Camera frames are read on your device, never uploaded.
         </p>
       </div>
-      {preview && (
-        <article className="encounter-preview">
-          <img src={preview.profile.photo} alt={preview.profile.name} />
-          <h2>
-            {preview.profile.name}, {preview.profile.age}
-          </h2>
-          <p>{preview.profile.bio}</p>
-          <button
-            className="btn"
-            disabled={busy || !user.published}
-            onClick={like}
-          >
-            Add as a crush ♡
-          </button>
-          <p className="hint">
-            Uses one of your daily swipes. A previous pass cannot be changed.
+      <section className="saved-encounters">
+        <h2>Your encounters</h2>
+        {encounters.length ? (
+          encounters.map((p) => (
+            <article className="encounter-preview" key={p.id}>
+              <img src={p.photo} alt="" />
+              <h2>
+                {p.name}, {p.age}
+              </h2>
+              <p>{p.bio}</p>
+              <button
+                className="btn"
+                disabled={busy || !user.published}
+                onClick={() => like(p.id)}
+              >
+                Add as a crush ♡
+              </button>
+              {!user.published && (
+                <p className="hint">
+                  Publish your profile before adding a crush.
+                </p>
+              )}
+            </article>
+          ))
+        ) : (
+          <p className="notice">
+            No encounters yet. Scan someone’s QR to save them here.
           </p>
-        </article>
-      )}
+        )}
+      </section>
       {error && (
-        <p className="error" role="alert">
+        <p role="alert" className="error">
           {error}
         </p>
       )}
       {notice && (
-        <p className="notice" role="status">
+        <p role="status" className="notice">
           {notice}
         </p>
       )}
     </section>
+  );
+}
+
+export function MatchContact({ profile }) {
+  return (
+    <button
+      type="button"
+      className="whatsapp-hi"
+      aria-label={`WhatsApp for ${profile.name}`}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M20.5 11.7a8.5 8.5 0 0 1-12.7 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        />
+        <path
+          d="M8.4 7.8c.4-.3.8 0 1 .6l.5 1.1c.1.3-.4.8-.6 1 .7 1.3 1.5 2.1 2.9 2.7.3-.2.7-.9 1-.8l1.7.8c.5.2.4.8.1 1.2-.6.9-1.4 1-2.5.6-2.6-.8-5.2-3.4-5.5-5.3-.2-.9.7-1.7 1.4-1.9Z"
+          fill="currentColor"
+        />
+      </svg>
+      <span>Say hi</span>
+    </button>
+  );
+}
+
+export function MatchedLetter({ profile }) {
+  const [open, setOpen] = useState(false),
+    [letter, setLetter] = useState(null),
+    [error, setError] = useState("");
+  async function reveal() {
+    setOpen(true);
+    setError("");
+    try {
+      setLetter((await api(`/connections/${profile.id}`)).receivedLetter);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  return (
+    <div className="matched-letter">
+      <button
+        className="quiet"
+        onClick={() => (open ? setOpen(false) : reveal())}
+      >
+        {open ? "Close letter" : "Open Unsent letter"}
+      </button>
+      {open && (
+        <div className="opened-letter">
+          {error ? (
+            <p role="alert">{error}</p>
+          ) : (
+            <p>{letter || "No letter from this match yet."}</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

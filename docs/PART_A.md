@@ -4,13 +4,13 @@
 
 Sometimes a like doesn't say enough, but sending a confession feels like too much. Let people write a private letter to their crush. It opens only when both people like each other. They can say what they feel without putting the other person on the spot, and a match starts with something more personal than a blank chat.
 
-A saved letter should not send a like or notify the recipient. Before a match, only its author can read it. After a match, the recipient can open it in their conversation. Editing or removing a letter cannot undo someone already reading or copying it.
+A saved letter should not send a like or notify the recipient. Before a match, only its author can read it. After a match, the recipient can open it from Matches. Editing or removing a letter cannot undo someone already reading or copying it.
 
 ## 2. Encounter — the person you met but never got their number
 
-Let two people exchange temporary QR encounter cards when they meet. They can decide later whether to add each other as a crush. If the interest is mutual, they can say hi and choose to share their numbers. It gives a chance meeting a second chance without asking for contact details immediately.
+Let two people exchange personal QR encounter cards when they meet. They can decide later whether to add each other as a crush. If the interest is mutual, they can say hi and choose to share their numbers. It gives a chance meeting a second chance without asking for contact details immediately.
 
-Cards should expire, be revocable, and contain no phone number. Anyone with the link can view the published profile until expiry, so people should share it deliberately. Number sharing should be optional and limited to the particular mutual match.
+The implemented profile QR contains only a name and unique profile ID. Scanning saves a published profile without revealing a phone number or sending a like. Unpublishing prevents new scans from saving it. WhatsApp contact exchange is a future plan; the current Say hi button is a visual placeholder.
 
 ## Smaller suggestions
 

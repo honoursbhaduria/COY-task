@@ -90,7 +90,7 @@ export async function userFlows(browser, base) {
       .getByRole("navigation")
       .getByRole("button", { name: /Matches/ })
       .click();
-    await a.getByRole("button", { name: /Bob, 24/ }).waitFor();
+    await a.getByRole("button", { name: /WhatsApp for/ }).waitFor();
     await a
       .getByRole("navigation")
       .getByRole("button", { name: /Discover/ })

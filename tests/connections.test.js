@@ -166,3 +166,48 @@ test("Connection HTTP routes enforce session, cross-user ownership and match che
     s.close();
   }
 });
+test("scanned encounters persist independently of token expiry and never send a like", () => {
+  let clock = Date.parse("2026-11-18T10:00:00Z");
+  const {
+    store: s,
+    users: [a, b, c],
+  } = setup({ now: () => clock, encounterMinutes: 1 });
+  try {
+    const card = s.createEncounter(a);
+    s.saveEncounter(b, card.token);
+    s.saveEncounter(b, card.token);
+    assert.equal(s.savedEncounters(b).length, 1);
+    assert.equal(s.savedEncounters(c).length, 0);
+    assert.equal(s.matches(a).length, 0);
+
+    clock += 61000;
+    assert.equal(s.savedEncounters(b)[0].id, a);
+    assert.throws(() => s.saveEncounter(c, card.token), { status: 404 });
+    assert.equal(s.crushEncounter(b, a).matched, false);
+    assert.throws(() => s.crushEncounter(c, a), { status: 404 });
+  } finally {
+    s.close();
+  }
+});
+test("profile IDs save encounters without trusting a scanned name or exposing contacts", () => {
+  const {
+    store: s,
+    users: [a, b, c],
+  } = setup();
+  try {
+    s.saveProfileEncounter(b, a);
+    s.saveProfileEncounter(b, a);
+    assert.equal(s.savedEncounters(b).length, 1);
+    assert.equal(s.savedEncounters(b)[0].name, "Alice");
+    assert.equal(s.savedEncounters(c).length, 0);
+    assert.throws(() => s.saveProfileEncounter(a, a), { status: 400 });
+    assert.throws(() => s.saveProfileEncounter(c, "not-an-id"), {
+      status: 400,
+    });
+    assert.equal(s.matches(a).length, 0);
+    s.edit(a, { ...profile("Alice"), published: false });
+    assert.throws(() => s.saveProfileEncounter(c, a), { status: 404 });
+  } finally {
+    s.close();
+  }
+});

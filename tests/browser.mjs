@@ -55,14 +55,12 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
   const nav = page.getByRole("navigation");
   await nav.getByRole("button", { name: /Home/ }).click();
-  await page
-    .getByRole("heading", { name: "Letters that wait for a yes" })
-    .waitFor();
+  assert.equal(await page.locator("section, article, form").count(), 0);
   await nav.getByRole("button", { name: /Discover/ }).click();
   await page.getByRole("button", { name: "Like profile", exact: true }).click();
   await page.getByRole("heading", { name: "It’s a match!" }).waitFor();
   await page.getByRole("button", { name: "See matches", exact: true }).click();
-  await page.getByRole("button", { name: /Ananya/ }).waitFor();
+  await page.getByRole("button", { name: /WhatsApp for/ }).waitFor();
   await nav.getByRole("button", { name: /Discover/ }).click();
   await page.getByRole("heading", { name: "Rohan, 24", exact: true }).waitFor();
   // Actual touch drag exercises the mobile gesture path.
@@ -109,10 +107,10 @@ try {
   await page.reload();
   await page.getByRole("heading", { name: "You're all caught up." }).waitFor();
   await nav.getByRole("button", { name: /Matches/ }).click();
-  await page.getByRole("button", { name: /Ananya/ }).waitFor();
+  await page.getByRole("button", { name: /WhatsApp for/ }).waitFor();
   assert.deepEqual(errors, []);
   console.log(
-    "Passed: Home suggestions, mobile drag, desktop buttons, mutual-match reveal, reload persistence, Matches and exhausted feed.",
+    "Passed: blank Home, mobile drag, desktop buttons, mutual-match reveal, reload persistence, Matches and exhausted feed.",
   );
   await userFlows(browser, "http://localhost:3099");
   await encounterFlow(browser, "http://localhost:3099");

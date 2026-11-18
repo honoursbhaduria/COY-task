@@ -61,42 +61,69 @@ export async function encounterFlow(browser, base) {
     async function card(page) {
       await page
         .getByRole("navigation")
-        .getByRole("button", { name: /Encounter/ })
+        .getByRole("button", { name: /Profile/ })
         .click();
       await page
-        .getByRole("button", { name: "Create my encounter card", exact: true })
+        .getByRole("button", { name: "Generate my QR", exact: true })
         .click();
       await page.waitForFunction(
-        () => document.querySelector(".encounter-card canvas")?.width > 100,
+        () => document.querySelector(".profile-qr-dialog canvas")?.width > 100,
       );
-      assert.equal(
-        await page.getByText("Copy link", { exact: true }).count(),
-        0,
-      );
-      assert.equal(await page.getByLabel("Their encounter link").count(), 0);
-      return page.locator(".encounter-card canvas").screenshot();
+      const image = await page
+        .locator(".profile-qr-dialog canvas")
+        .screenshot();
+      await page.getByRole("button", { name: "Close QR", exact: true }).click();
+      await page
+        .getByRole("navigation")
+        .getByRole("button", { name: /Encounter/ })
+        .click();
+      return image;
     }
     const qrA = await card(a),
       qrB = await card(b);
     // Permission denial offers image scanning without sending camera data.
-    await b.evaluate(() => {
-      navigator.mediaDevices.getUserMedia = async () => {
-        throw new DOMException("Denied", "NotAllowedError");
-      };
-    });
-    await b.getByRole("button", { name: "Scan QR code", exact: true }).click();
-    await b
-      .getByText(
-        "Camera permission was denied. Allow it in your browser or scan a QR image.",
-        { exact: true },
-      )
-      .waitFor();
-    await b.getByRole("button", { name: "Stop scanning", exact: true }).click();
-    await b.getByLabel("Or scan a QR image").setInputFiles({
-      name: "encounter.png",
-      mimeType: "image/png",
-      buffer: qrA,
-    });
+    async function scan(page, qr) {
+      await page.evaluate(async (bytes) => {
+        const bitmap = await createImageBitmap(
+          new Blob([new Uint8Array(bytes)], { type: "image/png" }),
+        );
+        const canvas = document.createElement("canvas");
+        canvas.width = 480;
+        canvas.height = 480;
+        const ctx = canvas.getContext("2d");
+        const draw = () => {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, 480, 480);
+          ctx.drawImage(bitmap, 40, 40, 400, 400);
+        };
+        draw();
+        navigator.mediaDevices.getUserMedia = async () => {
+          window.qrTestStream = canvas.captureStream(5);
+          window.qrTestTimer = setInterval(draw, 150);
+          return window.qrTestStream;
+        };
+      }, Array.from(qr));
+      await page
+        .getByRole("button", { name: "Scan QR code", exact: true })
+        .click();
+      await page
+        .getByText(
+          "Added to your encounters. Decide later if you feel a spark.",
+          { exact: true },
+        )
+        .waitFor();
+      assert.equal(
+        await page.evaluate(() =>
+          window.qrTestStream
+            .getTracks()
+            .every((t) => t.readyState === "ended"),
+        ),
+        true,
+      );
+      await page.evaluate(() => clearInterval(window.qrTestTimer));
+      assert.equal(await page.locator("input[type=file]").count(), 0);
+    }
+    await scan(b, qrA);
     await b
       .getByRole("button", { name: "Add as a crush ♡", exact: true })
       .click();
@@ -106,100 +133,37 @@ export async function encounterFlow(browser, base) {
         { exact: true },
       )
       .waitFor();
-    assert.equal(
-      await b
-        .getByText("I kept thinking about that conversation.", { exact: true })
-        .count(),
-      0,
-    );
-    // Feed an actual generated QR through a deterministic camera MediaStream.
-    await a.evaluate(async (bytes) => {
-      const bitmap = await createImageBitmap(
-        new Blob([new Uint8Array(bytes)], { type: "image/png" }),
-      );
-      const canvas = document.createElement("canvas");
-      canvas.width = 480;
-      canvas.height = 480;
-      const ctx = canvas.getContext("2d");
-      const draw = () => {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, 480, 480);
-        ctx.drawImage(bitmap, 40, 40, 400, 400);
-      };
-      draw();
-      navigator.mediaDevices.getUserMedia = async () => {
-        window.qrTestStream = canvas.captureStream(5);
-        window.qrTestTimer = setInterval(draw, 150);
-        return window.qrTestStream;
-      };
-    }, Array.from(qrB));
-    await a.getByRole("button", { name: "Scan QR code", exact: true }).click();
-    await a
-      .getByRole("button", { name: "Add as a crush ♡", exact: true })
-      .waitFor();
-    assert.equal(
-      await a.evaluate(() =>
-        window.qrTestStream.getTracks().every((t) => t.readyState === "ended"),
-      ),
-      true,
-    );
-    await a.evaluate(() => clearInterval(window.qrTestTimer));
+    await scan(a, qrB);
     await a
       .getByRole("button", { name: "Add as a crush ♡", exact: true })
       .click();
     await a
       .getByRole("heading", { name: "It’s a match!", exact: true })
       .waitFor();
-    await a.getByRole("button", { name: "Say hi", exact: true }).click();
-    await a.getByRole("heading", { name: "Say hi", exact: true }).waitFor();
-    await a.getByLabel("Message", { exact: true }).fill("Hi Ben!");
-    await a.getByRole("button", { name: "Send message", exact: true }).click();
-    await a.getByText("Hi Ben!", { exact: true }).waitFor();
-    await b
+    await a.getByRole("button", { name: "See matches", exact: true }).click();
+    const whatsapp = a.getByRole("button", {
+      name: "WhatsApp for Ben",
+      exact: true,
+    });
+    await whatsapp.waitFor();
+    const url = a.url();
+    await whatsapp.click();
+    assert.equal(a.url(), url);
+    assert.equal(await a.locator(".contact-sharing").count(), 0);
+    assert.equal(await whatsapp.innerText(), "Say hi");
+    await a
       .getByRole("navigation")
       .getByRole("button", { name: /Discover/ })
       .click();
+    assert.equal(await a.getByRole("button", { name: /Say hi/ }).count(), 0);
+    await b.reload();
     await b
-      .getByRole("button", { name: "Say hi to Aria", exact: true })
-      .click();
-    await b
-      .getByText("I kept thinking about that conversation.", { exact: true })
-      .waitFor();
-    await b.getByText("Hi Ben!", { exact: true }).waitFor();
-    await a.getByText("Ready to exchange numbers?", { exact: true }).click();
-    await a
-      .getByLabel("Your phone number", { exact: true })
-      .fill("+919876543210");
-    await a
-      .getByRole("button", { name: "Share with this match", exact: true })
-      .click();
-    await a
-      .getByText("Your number is shared with this match only.", { exact: true })
-      .waitFor();
-    await b.getByText("Ready to exchange numbers?", { exact: true }).click();
-    await b
-      .getByRole("link", { name: "+919876543210", exact: true })
-      .waitFor({ timeout: 15000 });
-    await a
-      .getByRole("button", { name: "Stop sharing my number", exact: true })
-      .click();
-    await a
-      .getByText("Your number is no longer shown.", { exact: true })
-      .waitFor();
-    await a
       .getByRole("navigation")
       .getByRole("button", { name: /Encounter/ })
       .click();
-    await a
-      .getByRole("button", { name: "Create my encounter card", exact: true })
-      .click();
-    await a.getByLabel("My Encounter QR code", { exact: true }).waitFor();
-    await a.getByRole("button", { name: "Revoke card", exact: true }).click();
-    await a
-      .getByText("Your previous card is no longer valid.", { exact: true })
-      .waitFor();
+    await b.getByRole("heading", { name: "Aria, 25", exact: true }).waitFor();
     console.log(
-      "Passed: private letter before match, QR generation, camera decoding/cleanup, image scanning, permission denial, mutual unlock, Say hi chat, and explicit number sharing/revocation.",
+      "Passed: camera QR exchange, saved encounters across reloads, mutual crush matching, and inert WhatsApp icon button.",
     );
   } finally {
     await ca.close();

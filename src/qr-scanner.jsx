@@ -12,30 +12,6 @@ function pixels(source, width, height, maxSize) {
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
   return context.getImageData(0, 0, canvas.width, canvas.height);
 }
-export async function readQrImage(file) {
-  if (
-    !file ||
-    !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-    file.size > 5 * 1024 * 1024
-  )
-    throw Error("Choose a QR image in PNG, JPEG, or WebP format under 5 MB.");
-  let bitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-    if (bitmap.width * bitmap.height > 20000000)
-      throw Error("Choose an image smaller than 20 megapixels.");
-    const image = pixels(bitmap, bitmap.width, bitmap.height, 1600);
-    const code = (await decoder())(image.data, image.width, image.height);
-    if (!code)
-      throw Error(
-        "No QR code found. Try a clear, uncropped image of the card.",
-      );
-    return code.data;
-  } finally {
-    bitmap?.close();
-  }
-}
-
 export function QrScanner({ onRead, onClose }) {
   const video = useRef(null),
     callback = useRef(onRead);
@@ -62,7 +38,7 @@ export function QrScanner({ onRead, onClose }) {
       try {
         if (!navigator.mediaDevices?.getUserMedia)
           throw Error(
-            "Camera access needs HTTPS or localhost. You can scan a QR image instead.",
+            "Camera access needs HTTPS or localhost. Please open the app with camera access.",
           );
         const decode = await decoder();
         if (!active) return;
@@ -98,7 +74,7 @@ export function QrScanner({ onRead, onClose }) {
             timer = setTimeout(scan, 180);
           } catch {
             stop();
-            setError("Could not read the camera. Try scanning a QR image.");
+            setError("Could not read the camera. Please try again.");
           }
         }
         scan();
@@ -107,9 +83,9 @@ export function QrScanner({ onRead, onClose }) {
         if (document.visibilityState === "visible")
           setError(
             e.name === "NotAllowedError"
-              ? "Camera permission was denied. Allow it in your browser or scan a QR image."
+              ? "Camera permission was denied. Allow camera access in your browser and try again."
               : e.name === "NotFoundError"
-                ? "No camera found. You can scan a QR image instead."
+                ? "No camera found. Please open the app with camera access."
                 : e.message || "Could not open your camera.",
           );
       }
