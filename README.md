@@ -2,57 +2,6 @@
 
 A mobile-first React app with an Express API and SQLite persistence, built for the Coy SDE Intern Assignment. Discover shows one profile at a time; likes stay private until they are mutual. Home contains an optional suggestions note requested during development; dismissing it leaves the placeholder blank.
 
-## Run locally
-
-Requires **Node.js 22.13+** (built-in SQLite).
-
-```sh
-npm ci
-npm run dev
-```
-
-Open **http://localhost:3000**. For a production build:
-
-```sh
-npm run build
-npm start
-```
-
-Optional environment variables must be exported before starting; `.env` is not loaded automatically:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `PORT` | `3000` | HTTP port |
-| `DATA_FILE` | `data/coy.sqlite` | Persistent SQLite file |
-| `COOKIE_SECURE` | `false` | Set to `true` behind HTTPS |
-| `CHROME_PATH` | `/usr/bin/google-chrome` | Chrome executable for browser tests |
-
-Use a persistent disk for SQLite. The app is intended for a single Node server, not ephemeral serverless storage. HTTPS is required for camera/geolocation on shared deployments; localhost is allowed for local testing.
-
-## Assignment checklist
-
-| Requirement | Implementation / status |
-| --- | --- |
-| React frontend, Node backend, persistent data | React + Vite, Express, SQLite |
-| Mobile-first; Home placeholder | Narrow responsive layout; optional dismissible suggestions note |
-| At least 30 profiles | 32 adult mock profiles with name, age, image, bio, city/college and interests |
-| Seeded incoming likes | Some mock profiles privately like each new demo user |
-| One profile at a time | Drag right to like, left to pass; desktop buttons |
-| Animations and feedback | Card dismissal, drag stamps, loading/error states |
-| No repeated swiped profiles | Server excludes all recorded likes and passes |
-| Empty state | Explicit exhausted-feed screen |
-| Mutual match only | Reverse like checked server-side; unique pair stored atomically |
-| Match celebration | “It’s a match!” dialog on creation |
-| Matches list | Mutual matches only |
-| Incoming-like privacy | Explicit public field allowlist; no incoming-like payloads |
-| `GET /feed`, `POST /swipe`, `GET /matches` | Implemented and tested |
-| Reload/restart persistence | SQLite stores profiles, sessions, decisions and matches |
-| Public GitHub source | This repository |
-| Part A: two feature suggestions | [Unsent and Encounter, with rationale](docs/PART_A.md) |
-| Part A: authenticated live Coy walkthrough | **Pending** — see research status below |
-
-The app opens without registration or external authentication. To support the requested multi-user extension, each browser gets one assumed logged-in user through an opaque, HttpOnly session cookie. Separate private/browser contexts act as separate users. Sessions last 30 days; clearing cookies starts a new identity. This is not verified account authentication or cross-device login.
-
 ## Screenshots and features
 
 Screenshots below are captured from the running production build with isolated, fictional sample data. To reproduce them: `npm run build && node scripts/screenshots.mjs`.
@@ -166,3 +115,11 @@ The original brief assumes one user. Browser-isolated users and the Profile/Enco
 Before public production use, add verified account login/recovery/deletion, moderation/blocking, abuse controls for new identities and deployment-specific infrastructure. SQLite images and anonymous identities are suitable for this assignment prototype, not a complete consumer service. The interface follows Coy's public visual language and uses its publicly served font as reference; this is an unofficial project.
 
 The full dependency audit currently reports an unpatched development-only `picomatch` advisory through Vite ([GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)); production dependencies are checked separately. Avoid untrusted glob inputs and recheck for a patched release. No forced major-version downgrade was applied.
+
+## Vercel deployment architecture
+
+The `coy-assignment-task` Vercel project uses the Express API at `api/index.js` and the static Vite frontend. A persistent `DATABASE_URL` is required for deployment: Vercel's temporary filesystem is never used for production data. Session hashes, swipes, profiles, letters, encounters and normalized photo bytes live in PostgreSQL. `server/postgres/database.js` provides pooled connections, connection-lifecycle handling, parameterized queries and transaction-scoped advisory locking for cross-instance mutuality checks.
+
+The PostgreSQL domain modules are generated from the SQLite domain implementation with `npm run generate:postgres`; validation and privacy rules have a shared source. Local tests still support SQLite. Set `PG_TEST_URL` to an isolated PostgreSQL database to run the additional integration test for concurrent requests, multiple backend instances, private letters and image persistence. Do not point tests at a production database. The local server uses PostgreSQL if `DATABASE_URL` is set, otherwise SQLite.
+
+Deployment is pending Neon integration terms acceptance in the Vercel account. No live URL or completed deployment is claimed until persistent storage has been connected and the CLI reports a successful deployment.

@@ -8,3 +8,7 @@ test-results/
 
 .playwright-cli/
 output/
+.vercel
+.env*
+
+!.env.example

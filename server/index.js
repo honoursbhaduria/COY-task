@@ -7,12 +7,13 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const production =
   process.argv.includes("--production") ||
   process.env.NODE_ENV === "production";
-const store = createStore(
-  process.env.DATA_FILE || resolve(root, "data/coy.sqlite"),
-  {
-    encounterMinutes: Number(process.env.ENCOUNTER_MINUTES || 30),
-  },
-);
+const store = process.env.DATABASE_URL
+  ? await (
+      await import("./postgres/store.js")
+    ).createStore(process.env.DATABASE_URL)
+  : createStore(process.env.DATA_FILE || resolve(root, "data/coy.sqlite"), {
+      encounterMinutes: Number(process.env.ENCOUNTER_MINUTES || 30),
+    });
 const app = createApp(store, {
   production,
   secureCookies: process.env.COOKIE_SECURE === "true",
