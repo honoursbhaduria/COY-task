@@ -1,6 +1,6 @@
 # Coy — Discover
 
-A mobile-first React app with an Express API and SQLite persistence, built for the Coy SDE Intern Assignment. Discover shows one profile at a time; likes stay private until they are mutual. Home is a blank placeholder, as requested in the brief.
+A mobile-first React app with an Express API and SQLite persistence, built for the Coy SDE Intern Assignment. Discover shows one profile at a time; likes stay private until they are mutual. Home contains an optional suggestions note requested during development; dismissing it leaves the placeholder blank.
 
 ## Run locally
 
@@ -34,7 +34,7 @@ Use a persistent disk for SQLite. The app is intended for a single Node server, 
 | Requirement | Implementation / status |
 | --- | --- |
 | React frontend, Node backend, persistent data | React + Vite, Express, SQLite |
-| Mobile-first; blank Home | Narrow responsive layout, placeholder Home |
+| Mobile-first; Home placeholder | Narrow responsive layout; optional dismissible suggestions note |
 | At least 30 profiles | 32 adult mock profiles with name, age, image, bio, city/college and interests |
 | Seeded incoming likes | Some mock profiles privately like each new demo user |
 | One profile at a time | Drag right to like, left to pass; desktop buttons |
@@ -93,7 +93,7 @@ The camera asks permission and decodes frames locally. Tracks stop after success
 
 ### Dark mode, empty state and blank Home
 
-Dark mode is saved locally. Exhausting the feed shows a clear empty state. Home remains blank; feature suggestions are kept in Part A documentation.
+Dark mode is saved locally. Exhausting the feed shows a clear empty state. Home shows a small dismissible note about Unsent and Encounter. Dismissal is saved locally and leaves Home blank. The full proposals are in Part A documentation.
 
 <img src="docs/screenshots/dark-mode.png" alt="Dark mode Discover" width="300" /> <img src="docs/screenshots/empty-state.png" alt="Exhausted feed" width="300" /> <img src="docs/screenshots/home.png" alt="Blank Home placeholder" width="300" />
 
@@ -161,7 +161,7 @@ Tests do not modify your working demo database. `CHROME_PATH` can override the b
 
 [Part A](docs/PART_A.md) proposes **Unsent** and **Encounter** and explains why each would help. The live Coy public login was inspected. Actual phone OTP completion, adding a crush, email verification, invite destination and extra-slot screen remain **unverified** because no authenticated live session was available. Complete that firsthand walkthrough before submitting; do not claim the local prototype completes those research steps. Do not purchase extra slots.
 
-The original brief assumes one user. Browser-isolated users and the Profile/Encounter tabs are optional extensions requested during development. Home stays blank to meet the explicit requirement. No external auth or payment integration is included.
+The original brief assumes one user. Browser-isolated users and the Profile/Encounter tabs are optional extensions requested during development. The optional Home note extends the original blank-Home requirement and can be dismissed. No external auth or payment integration is included.
 
 Before public production use, add verified account login/recovery/deletion, moderation/blocking, abuse controls for new identities and deployment-specific infrastructure. SQLite images and anonymous identities are suitable for this assignment prototype, not a complete consumer service. The interface follows Coy's public visual language and uses its publicly served font as reference; this is an unofficial project.
 

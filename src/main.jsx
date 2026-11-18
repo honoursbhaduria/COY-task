@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
+import { HomeNote } from "./home-note.jsx";
 import { api } from "./api.js";
 import { ProfileEditor, LocationPermission } from "./features.jsx";
 import {
@@ -219,6 +220,7 @@ function App() {
           {theme === "dark" ? "☀" : "☾"}
         </button>
       </header>
+      {tab === "Home" && <HomeNote />}
       {tab === "Encounter" && (
         <Encounters
           user={user}

@@ -55,7 +55,16 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
   const nav = page.getByRole("navigation");
   await nav.getByRole("button", { name: /Home/ }).click();
-  assert.equal(await page.locator("section, article, form").count(), 0);
+  await page
+    .getByRole("heading", { name: "Two ideas I’d love to see in Coy" })
+    .waitFor();
+  await page.getByRole("button", { name: "Dismiss suggestions" }).click();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Like profile", exact: true })
+    .waitFor();
+  await nav.getByRole("button", { name: /Home/ }).click();
+  assert.equal(await page.locator("aside, section, article, form").count(), 0);
   await nav.getByRole("button", { name: /Discover/ }).click();
   await page.getByRole("button", { name: "Like profile", exact: true }).click();
   await page.getByRole("heading", { name: "It’s a match!" }).waitFor();

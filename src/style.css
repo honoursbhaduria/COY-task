@@ -1515,3 +1515,70 @@ html[data-theme="dark"] .profile-qr-dialog > .close-dialog {
   background: #453b53;
   color: #f5f1fb;
 }
+.home-note {
+  position: relative;
+  margin: 22px 0;
+  padding: 22px 20px;
+  background: #fff9dc;
+  border: 1px solid #e5dba3;
+  border-radius: 20px;
+}
+.note-eyebrow {
+  display: block;
+  color: #78692d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.home-note h2 {
+  font-size: 19px;
+  line-height: 1.25;
+  padding-right: 24px;
+  max-width: 28ch;
+}
+.home-note p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #5c543a;
+  margin-top: 14px;
+}
+.home-note .note-extras {
+  font-size: 12px;
+  border-top: 1px solid #e5dba3;
+  padding-top: 14px;
+}
+.note-dismiss {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  font-size: 24px;
+  color: #78692d;
+}
+.note-dismiss:hover {
+  background: #efe6b8;
+}
+html[data-theme="dark"] .home-note {
+  background: #302c20;
+  border-color: #595037;
+}
+html[data-theme="dark"] .home-note h2 {
+  color: #f5f1e4;
+}
+html[data-theme="dark"] .home-note p,
+html[data-theme="dark"] .note-eyebrow,
+html[data-theme="dark"] .note-dismiss {
+  color: #d2c7a0;
+}
+html[data-theme="dark"] .home-note .note-extras {
+  border-color: #595037;
+}
+html[data-theme="dark"] .note-dismiss:hover {
+  background: #49412c;
+}
