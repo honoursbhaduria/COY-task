@@ -1476,3 +1476,42 @@ html[data-theme="dark"] .profile-qr-dialog > p {
 .matched-letter .opened-letter {
   margin: 12px 0 0;
 }
+/* A dialog is rendered in the top layer; give its contents explicit theme colors. */
+.profile-qr-dialog .encounter-card {
+  color: #15121d;
+  border-color: #c5b8e0;
+}
+.profile-qr-dialog .encounter-card p {
+  color: #6d6979;
+}
+.profile-qr-dialog canvas {
+  background: #fff;
+  color-scheme: light;
+  border: 8px solid #fff;
+  box-sizing: content-box;
+  max-width: calc(100% - 16px);
+}
+.profile-qr-dialog > .close-dialog {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: #f6f4fa;
+  color: #15121d;
+}
+html[data-theme="dark"] .profile-preview .profile-qr {
+  background: transparent;
+}
+html[data-theme="dark"] .profile-qr-dialog .encounter-card {
+  background: #39304d;
+  color: #f5f1fb;
+  border-color: #625873;
+}
+html[data-theme="dark"] .profile-qr-dialog .encounter-card p,
+html[data-theme="dark"] .profile-qr-dialog .profile-id {
+  color: #d1c7df;
+}
+html[data-theme="dark"] .profile-qr-dialog > .close-dialog {
+  background: #453b53;
+  color: #f5f1fb;
+}
